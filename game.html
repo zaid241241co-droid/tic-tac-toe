@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyber Rider - Extreme Racing</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+body {
+    overflow: hidden;
+    background: #03030a;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: white;
+}
+
+/* GAME CONTAINER */
+#game {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(180deg, #0b091a 0%, #1a103c 40%, #05050f 40%);
+}
+
+/* CYBER SUN & HORIZON */
+.sun {
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    left: 50%;
+    top: 12%;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: linear-gradient(180deg, #ff007f 0%, #ffaa00 100%);
+    box-shadow: 0 0 50px rgba(255, 0, 127, 0.6);
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 90%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 90%);
+    z-index: 1;
+}
+
+.mountain-skyline {
+    position: absolute;
+    top: 32%;
+    width: 100%;
+    height: 8%;
+    background: linear-gradient(0deg, #100c24, transparent);
+    z-index: 2;
+}
+
+/* ROAD */
+#road {
+    position: absolute;
+    width: 50vw;
+    min-width: 380px;
+    height: 120%;
+    left: 50%;
+    top: -10%;
+    transform: translateX(-50%);
+    background: #111;
+    border-left: 6px solid #00ffff;
+    border-right: 6px solid #00ffff;
+    box-shadow: 
+        0 0 40px rgba(0, 255, 255, 0.4),
+        inset 0 0 100px rgba(0,0,0,0.9);
+    z-index: 3;
+}
+
+/* LANE LINES */
+.lane {
+    position: absolute;
+    top: -100px;
+    width: 6px;
+    height: 120%;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 80px,
+        #ff007f 80px,
+        #ff007f 150px
+    );
+    opacity: 0.9;
+}
+
+.lane.one { left: 33.3%; }
+.lane.two { left: 66.6%; }
+
+/* ROAD SIDE (GRID LANDSCAPE) */
+.side {
+    position: absolute;
+    top: 0;
+    width: 25vw;
+    height: 100%;
+    background: 
+        linear-gradient(90deg, rgba(5,5,15,0.8), rgba(5,5,15,0.2)),
+        repeating-linear-gradient(
+            0deg,
+            #080614 0px,
+            #080614 40px,
+            #14102e 40px,
+            #14102e 42px
+        );
+    z-index: 2;
+}
+.side.left { left: 0; border-right: 2px solid rgba(255,0,127,0.2); }
+.side.right { right: 0; border-left: 2px solid rgba(255,0,127,0.2); }
+
+/* HUD */
+#hud {
+    position: absolute;
+    z-index: 50;
+    top: 25px;
+    left: 25px;
+    display: flex;
+    gap: 15px;
+}
+
+.stat {
+    padding: 10px 20px;
+    background: rgba(10, 10, 25, 0.75);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 12px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.stat small {
+    display: block;
+    color: #a0a0c0;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.stat strong {
+    font-size: 24px;
+    color: #00ffff;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+/* PLAYER BIKE */
+#player {
+    position: absolute;
+    z-index: 20;
+    width: 68px;
+    height: 140px;
+    left: 50%;
+    bottom: 80px;
+    transform: translateX(-50%);
+    will-change: transform, left;
+}
+
+.bike-body {
+    position: absolute;
+    width: 32px;
+    height: 95px;
+    left: 18px;
+    top: 22px;
+    border-radius: 40% 40% 25% 25%;
+    background: linear-gradient(90deg, #700020, #ff0055, #ff3377, #900025);
+    box-shadow: 0 0 20px #ff0055, inset -4px 0 10px rgba(0,0,0,0.7);
+}
+
+.wheel {
+    position: absolute;
+    width: 22px;
+    height: 50px;
+    left: 23px;
+    border-radius: 50%;
+    background: #000;
+    border: 4px solid #1a1a1a;
+    box-shadow: 0 0 10px rgba(0,255,255,0.4);
+}
+.wheel.front { top: 0; }
+.wheel.back { bottom: 0; }
+
+.headlight {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 24px;
+    top: 25px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 35px 15px rgba(0, 255, 255, 0.9);
+}
+
+/* TRAFFIC BIKES */
+.enemy {
+    position: absolute;
+    z-index: 15;
+    width: 62px;
+    height: 125px;
+}
+
+.enemy .body {
+    position: absolute;
+    width: 28px;
+    height: 80px;
+    left: 17px;
+    top: 20px;
+    border-radius: 40%;
+    background: linear-gradient(90deg, #051535, #0077ff, #00d4ff, #022060);
+    box-shadow: 0 0 15px rgba(0, 119, 255, 0.8);
+}
+
+.enemy .wheel {
+    width: 20px;
+    height: 42px;
+    left: 21px;
+}
+.enemy .front { top: 0; }
+.enemy .back { bottom: 0; }
+
+/* PARTICLES / SPEED LINES */
+.particle {
+    position: absolute;
+    width: 2px;
+    height: 25px;
+    background: rgba(0, 255, 255, 0.6);
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* CRASH EFFECTS */
+#crashFlash {
+    position: absolute;
+    z-index: 80;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#crashText {
+    position: absolute;
+    z-index: 90;
+    left: 50%;
+    top: 45%;
+    transform: translate(-50%, -50%) scale(0.5);
+    font-size: clamp(45px, 9vw, 110px);
+    font-weight: 900;
+    color: #ff0055;
+    text-shadow: 0 0 20px #000, 0 0 40px #ff0055;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* GAME OVER PANEL */
+#gameOver {
+    position: absolute;
+    z-index: 100;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(3, 3, 10, 0.85);
+    backdrop-filter: blur(15px);
+}
+
+.panel {
+    width: min(90%, 450px);
+    padding: 40px;
+    text-align: center;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(20, 15, 40, 0.95), rgba(5, 5, 15, 0.95));
+    border: 1px solid rgba(255, 0, 127, 0.4);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 0, 127, 0.2);
+}
+
+.panel h1 {
+    font-size: 42px;
+    color: #ff0055;
+    margin-bottom: 10px;
+    text-shadow: 0 0 15px rgba(255, 0, 85, 0.6);
+}
+
+.finalScore {
+    font-size: 56px;
+    color: #00ffff;
+    font-weight: 900;
+    margin: 15px 0;
+    text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+}
+
+#restart {
+    border: none;
+    padding: 15px 35px;
+    border-radius: 50px;
+    background: linear-gradient(90deg, #ff0055, #ffaa00);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 0 25px rgba(255, 0, 85, 0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#restart:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 35px rgba(255, 0, 85, 0.8);
+}
+
+/* TOUCH CONTROLS */
+#controls {
+    position: absolute;
+    z-index: 60;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(95%, 600px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+}
+
+.controlGroup {
+    display: flex;
+    gap: 15px;
+    pointer-events: auto;
+}
+
+.control {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    background: rgba(10, 10, 25, 0.65);
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    touch-action: none;
+    backdrop-filter: blur(5px);
+    transition: background 0.1s;
+}
+
+.control:active {
+    background: #ff0055;
+    border-color: #ff0055;
+    transform: scale(0.92);
+}
+
+.control.gas { border-color: #00ffff; }
+.control.brake { border-color: #ff0055; }
+
+@media(max-width: 600px) {
+    .stat { padding: 8px 12px; min-width: 80px; }
+    .stat strong { font-size: 16px; }
+    .control { width: 60px; height: 60px; font-size: 20px; }
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+    <div class="sun"></div>
+    <div class="mountain-skyline"></div>
+
+    <div class="side left"></div>
+    <div class="side right"></div>
+
+    <div id="road">
+        <div class="lane one"></div>
+        <div class="lane two"></div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud">
+        <div class="stat">
+            <small>Speed</small>
+            <strong><span id="speed">0</span> KM/H</strong>
+        </div>
+        <div class="stat">
+            <small>Score</small>
+            <strong id="score">0</strong>
+        </div>
+        <div class="stat">
+            <small>Distance</small>
+            <strong><span id="distance">0</span> M</strong>
+        </div>
+    </div>
+
+    <!-- PLAYER -->
+    <div id="player">
+        <div class="wheel front"></div>
+        <div class="wheel back"></div>
+        <div class="bike-body"></div>
+        <div class="headlight"></div>
+    </div>
+
+    <!-- CRASH EFFECTS -->
+    <div id="crashFlash"></div>
+    <div id="crashText">CRASH!</div>
+
+    <!-- CONTROLS -->
+    <div id="controls">
+        <div class="controlGroup">
+            <button class="control" id="left">◀</button>
+            <button class="control" id="right">▶</button>
+        </div>
+        <div class="controlGroup">
+            <button class="control brake" id="brake">BRAKE</button>
+            <button class="control gas" id="gasBtn">🔥</button>
+        </div>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div id="gameOver">
+        <div class="panel">
+            <h1>SYSTEM FAILURE</h1>
+            <p>Your bike crashed into traffic!</p>
+            <div class="finalScore" id="finalScore">0</div>
+            <p>FINAL SCORE</p>
+            <br>
+            <p>Distance: <strong id="finalDistance">0</strong> meters</p>
+            <br>
+            <button id="restart">RE-ENGAGE RACE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const player = document.getElementById("player");
+const road = document.getElementById("road");
+const speedDisplay = document.getElementById("speed");
+const scoreDisplay = document.getElementById("score");
+const distanceDisplay = document.getElementById("distance");
+const gameOverScreen = document.getElementById("gameOver");
+const finalScore = document.getElementById("finalScore");
+const finalDistance = document.getElementById("finalDistance");
+const crashFlash = document.getElementById("crashFlash");
+const crashText = document.getElementById("crashText");
+
+let gameRunning = true;
+let speed = 0;
+const maxSpeed = 300;
+const acceleration = 0.7;
+const brakeForce = 2.5;
+const friction = 0.3;
+
+let score = 0;
+let distance = 0;
+let playerX = window.innerWidth / 2;
+let steering = 0;
+let enemies = [];
+let lastTime = performance.now();
+let spawnTimer = 0;
+
+/* INPUT HANDLING */
+const keys = {};
+window.addEventListener("keydown", e => {
+    keys[e.key.toLowerCase()] = true;
+    if (["arrowleft", "arrowright", "arrowup", "arrowdown", " "].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+    }
+});
+window.addEventListener("keyup", e => {
+    keys[e.key.toLowerCase()] = false;
+});
+
+function holdButton(element, key) {
+    element.addEventListener("pointerdown", e => { e.preventDefault(); keys[key] = true; });
+    element.addEventListener("pointerup", e => { e.preventDefault(); keys[key] = false; });
+    element.addEventListener("pointerleave", () => { keys[key] = false; });
+}
+
+holdButton(document.getElementById("left"), "arrowleft");
+holdButton(document.getElementById("right"), "arrowright");
+holdButton(document.getElementById("gasBtn"), "arrowup");
+holdButton(document.getElementById("brake"), "arrowdown");
+
+/* SPAWN TRAFFIC */
+function spawnEnemy() {
+    const enemy = document.createElement("div");
+    enemy.className = "enemy";
+
+    const body = document.createElement("div"); body.className = "body";
+    const front = document.createElement("div"); front.className = "wheel front";
+    const back = document.createElement("div"); back.className = "wheel back";
+
+    enemy.appendChild(front);
+    enemy.appendChild(body);
+    enemy.appendChild(back);
+    road.appendChild(enemy);
+
+    const lanes = [0.15, 0.38, 0.62, 0.85];
+    const lane = lanes[Math.floor(Math.random() * lanes.length)];
+    const x = road.offsetLeft + road.offsetWidth * lane - 31;
+
+    enemy.style.left = x + "px";
+    enemy.dataset.y = -180;
+    enemy.style.top = "-180px";
+    enemies.push(enemy);
+}
+
+/* COLLISION DETECTION */
+function checkCollision(a, b) {
+    const r1 = a.getBoundingClientRect();
+    const r2 = b.getBoundingClientRect();
+    const pad = 10;
+    return !(
+        r1.right - pad < r2.left + pad ||
+        r1.left + pad > r2.right - pad ||
+        r1.bottom - pad < r2.top + pad ||
+        r1.top + pad > r2.bottom - pad
+    );
+}
+
+/* CRASH STATE */
+function crash() {
+    if (!gameRunning) return;
+    gameRunning = false;
+    speed = 0;
+
+    crashFlash.style.opacity = "0.8";
+    crashText.style.opacity = "1";
+    crashText.style.transform = "translate(-50%, -50%) scale(1.2)";
+    player.style.transform = "translateX(-50%) rotate(40deg)";
+
+    setTimeout(() => {
+        crashFlash.style.transition = "opacity 0.5s";
+        crashFlash.style.opacity = "0";
+        crashText.style.transition = "opacity 0.5s, transform 0.5s";
+        crashText.style.opacity = "0";
+    }, 400);
+
+    setTimeout(() => {
+        finalScore.textContent = Math.floor(score);
+        finalDistance.textContent = Math.floor(distance);
+        gameOverScreen.style.display = "flex";
+    }, 900);
+}
+
+/* RESTART GAME */
+document.getElementById("restart").addEventListener("click", () => {
+    enemies.forEach(e => e.remove());
+    enemies = [];
+    speed = 0;
+    score = 0;
+    distance = 0;
+    playerX = window.innerWidth / 2;
+    player.style.left = "50%";
+    player.style.transform = "translateX(-50%)";
+    gameOverScreen.style.display = "none";
+    crashText.style.opacity = "0";
+    gameRunning = true;
+    lastTime = performance.now();
+});
+
+/* GAME LOOP UPDATES */
+function updatePlayer(dt) {
+    const accelerating = keys["arrowup"] || keys["w"];
+    const isBraking = keys["arrowdown"] || keys["s"];
+    const left = keys["arrowleft"] || keys["a"];
+    const right = keys["arrowright"] || keys["d"];
+
+    if (accelerating) speed += acceleration * dt;
+    else speed -= friction * dt;
+
+    if (isBraking) speed -= brakeForce * dt;
+    speed = Math.max(0, Math.min(maxSpeed, speed));
+
+    steering = 0;
+    if (left) steering = -1;
+    if (right) steering = 1;
+
+    const steeringSpeed = (4 + speed / 35) * dt;
+    playerX += steering * steeringSpeed;
+
+    const roadRect = road.getBoundingClientRect();
+    playerX = Math.max(roadRect.left + 25, Math.min(roadRect.right - 25, playerX));
+    player.style.left = playerX + "px";
+
+    const lean = steering * 20;
+    player.style.transform = `translateX(-50%) rotate(${lean}deg)`;
+}
+
+function updateEnemies(dt) {
+    const roadSpeed = (2.5 + speed * 0.025);
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        const enemy = enemies[i];
+        let y = parseFloat(enemy.dataset.y);
+        y += roadSpeed * dt;
+        enemy.dataset.y = y;
+        enemy.style.top = y + "px";
+
+        if (checkCollision(player, enemy)) {
+            crash();
+            return;
+        }
+
+        if (y > window.innerHeight + 200) {
+            enemy.remove();
+            enemies.splice(i, 1);
+            score += 150;
+        }
+    }
+}
+
+function updateSpawner(dt) {
+    spawnTimer += dt;
+    const spawnDelay = Math.max(500, 1400 - speed * 3.2);
+    if (spawnTimer >= spawnDelay) {
+        spawnEnemy();
+        spawnTimer = 0;
+    }
+}
+
+function updateHUD(dt) {
+    distance += speed * dt * 0.002;
+    score += speed * dt * 0.015;
+
+    scoreDisplay.textContent = Math.floor(score);
+    distanceDisplay.textContent = Math.floor(distance);
+    speedDisplay.textContent = Math.floor(speed);
+}
+
+let roadOffset = 0;
+function animateRoad(dt) {
+    roadOffset += speed * dt * 0.1;
+    road.style.backgroundPosition = `0 ${roadOffset}px`;
+}
+
+function gameLoop(now) {
+    const dt = Math.min(32, now - lastTime);
+    lastTime = now;
+
+    if (gameRunning) {
+        updatePlayer(dt);
+        updateEnemies(dt);
+        updateSpawner(dt);
+        updateHUD(dt);
+        animateRoad(dt);
+    }
+    requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
+</script>
+
+</body>
+</html>
